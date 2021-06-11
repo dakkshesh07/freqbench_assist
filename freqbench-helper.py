@@ -85,6 +85,18 @@ else:
 		print("make sure you have the json file inside program directory")
 		quit()
 
+def Enquiry(lis1):
+    if lis1:
+        return 1
+    else:
+        return 0
+
+def var_check(my_var):
+    try:
+        my_var
+    except NameError:
+        my_var = None
+
 def cal_efficient_freqs():
 	print("efficient freq calculation is fully based on kdrag0n's script")
 	if response == '1':
@@ -437,23 +449,294 @@ def cal_minimal_energy_model():
 	print("""\t};
 	};""")
 
+def int_freq_efficiency_graph():
+    # create all empty lists and variables that we will need later
+    one = "no"
+    one_four = "no"
+    one_four_seven = "no"
+    one_four_six = "no"
+    one_four_six_seven = "no"
+    one_seven = "no"
+    one_six = "no"
+    one_six_seven = "no"
+    cpu_freqs_1 = []
+    cpu_freqs_4 = []
+    cpu_freqs_6 = []
+    cpu_freqs_7 = []
+    cpu_effs_1 = []
+    cpu_effs_4 = []
+    cpu_effs_6 = []
+    cpu_effs_7 = []
+
+    if response == '1':
+        final_url = (nav_url + "/results.json")
+        with urllib.request.urlopen(final_url) as url:
+            json_data = json.loads(url.read().decode())
+    else:
+        f = open(file,)
+        json_data = json.load(f)
+    cpus_data = json_data["cpus"]
+
+    for cpu, cpu_data in cpus_data.items():
+        cpu = str(cpu)
+        cpu_data = cpus_data[cpu]
+        for freqs in cpu_data.items():
+            eff_freqs = set()
+
+            # Start with the most efficient freq
+            freqs = cpu_data["freqs"]
+            max_eff_freq, max_eff = max(
+                ((int(freq), freq_data["active"]["ulpmark_cm_score"]) for freq, freq_data in freqs.items()),
+                key=lambda opp: opp[1]
+            )
+            #print("Most efficient freq: " + str(max_eff_freq), str(max_eff))
+            eff_freqs.add(max_eff_freq)
+
+            # Add the max freq
+            max_freq = max(int(freq) for freq in freqs.keys())
+            max_freq_eff = freqs[str(max_freq)]["active"]["ulpmark_cm_score"]
+            eff_freqs.add(max_freq)
+
+            # Add efficient intermediate freqs
+            last_freq = max_eff_freq
+            freq_keys = list(map(int, freqs.keys()))
+            for freq_i, (freq, freq_data) in enumerate(freqs.items()):
+                freq = str(freq)
+                eff = freq_data["active"]["ulpmark_cm_score"]
+
+                last_freq = freq
+                eff_freqs.add(freq)
+
+                # Append all freqs and efficiency score to list according to the core cluster they belong to
+                if cpu == "1":
+                    cpu_freqs_1.append(freq)
+                    cpu_effs_1.append(eff)
+                elif cpu == "4":
+                    cpu_freqs_4.append(freq)
+                    cpu_effs_4.append(eff)
+                elif cpu == "6":
+                    cpu_freqs_6.append(freq)
+                    cpu_effs_6.append(eff)
+                elif cpu == "7":
+                    cpu_freqs_7.append(freq)
+                    cpu_effs_7.append(eff)
+    # detect what cluster core combination the soc has and name it according to it
+    if Enquiry(cpu_freqs_1):
+        if Enquiry(cpu_freqs_4):
+            one_four = "yes"
+            if Enquiry(cpu_freqs_6):
+                one_four_six = "yes"
+                if Enquiry(cpu_freqs_7):
+                    one_four_six_seven = "yes"
+            elif Enquiry(cpu_freqs_7):
+                one_four_seven = "yes"
+
+    if Enquiry(cpu_freqs_1):
+        if Enquiry(cpu_freqs_6):
+            one_six = "yes"
+            if Enquiry(cpu_freqs_7):
+                one_six_seven = "yes"
+
+    if Enquiry(cpu_freqs_1):
+        if Enquiry(cpu_freqs_7):
+            one_seven = "yes"
+
+    if (cpu_freqs_1):
+        if not(cpu_freqs_4):
+            if not(cpu_freqs_6):
+                if not(cpu_freqs_7):
+                    one = "yes"
+
+    # Plot graph according to the Core cluster combination
+    if (one == "yes"):
+        freqs = cpu_freqs_1
+        values = cpu_effs_1
+        fig = plt.figure(figsize = (10, 5))
+        plt.bar(freqs, values, color ='b',
+        width = 0.4)
+        plt.xlabel("All freqs of " + name)
+        plt.ylabel("efficiency score")
+        plt.title("efficiency score graph for all freqs in " + name)
+        plt.show()
+
+    elif(one_four_seven == "yes"):
+        fig, axs = plt.subplots(3)
+        freqs = cpu_freqs_1
+        values = cpu_effs_1
+        axs[0].bar(freqs, values, color='r', label='Little')
+        axs[0].legend()
+        axs[0].set_xlabel("All freqs of " + name + "'s Little Core")
+        axs[0].set_ylabel("efficiency score")
+
+        freqs = cpu_freqs_4
+        values = cpu_effs_4
+        axs[1].bar(freqs, values, color='b', label='Big')
+        axs[1].legend()
+        axs[1].set_xlabel("All freqs of " + name + "'s Big Core")
+        axs[1].set_ylabel("efficiency score")
+
+        freqs = cpu_freqs_7
+        values = cpu_effs_7
+        axs[2].bar(freqs, values, color='g', label='Prime')
+        axs[2].legend()
+        axs[2].set_xlabel("All freqs of " + name + "'s Prime Core")
+        axs[2].set_ylabel("efficiency score")
+        plt.show()
+
+    elif(one_four_six == "yes"):
+        fig, axs = plt.subplots(3)
+        freqs = cpu_freqs_1
+        values = cpu_effs_1
+        axs[0].bar(freqs, values, color='r', label='Little')
+        axs[0].legend()
+        axs[0].set_xlabel("All freqs of " + name + "'s Little Core")
+        axs[0].set_ylabel("efficiency score")
+
+        freqs = cpu_freqs_4
+        values = cpu_effs_4
+        axs[1].bar(freqs, values, color='b', label='Big')
+        axs[1].legend()
+        axs[1].set_xlabel("All freqs of " + name + "'s Big Core")
+        axs[1].set_ylabel("efficiency score")
+
+        freqs = cpu_freqs_6
+        values = cpu_effs_6
+        axs[2].bar(freqs, values, color='g', label='Prime')
+        axs[2].legend()
+        axs[2].set_xlabel("All freqs of " + name + "'s Big Core")
+        axs[2].set_ylabel("efficiency score")
+        plt.show()
+
+    elif(one_six_seven == "yes"):
+        fig, axs = plt.subplots(3)
+        freqs = cpu_freqs_1
+        values = cpu_effs_1
+        axs[0].bar(freqs, values, color='r', label='Little')
+        axs[0].legend()
+        axs[0].set_xlabel("All freqs of " + name + "'s Little Core")
+        axs[0].set_ylabel("efficiency score")
+
+        freqs = cpu_freqs_6
+        values = cpu_effs_6
+        axs[1].bar(freqs, values, color='b', label='Big')
+        axs[1].legend()
+        axs[1].set_xlabel("All freqs of " + name + "'s Big Core")
+        axs[1].set_ylabel("efficiency score")
+
+        freqs = cpu_freqs_7
+        values = cpu_effs_7
+        axs[2].bar(freqs, values, color='g', label='Prime')
+        axs[2].legend()
+        axs[2].set_xlabel("All freqs of " + name + "'s Prime Core")
+        axs[2].set_ylabel("efficiency score")
+        plt.show()
+
+    elif(one_four_six_seven == "yes"):
+        fig, axs = plt.subplots(4)
+        freqs = cpu_freqs_1
+        values = cpu_effs_1
+        axs[0].bar(freqs, values, color='r', label='Little')
+        axs[0].legend()
+        axs[0].set_xlabel("All freqs of " + name + "'s Little Core")
+        axs[0].set_ylabel("efficiency score")
+
+        freqs = cpu_freqs_4
+        values = cpu_effs_4
+        axs[1].bar(freqs, values, color='b', label='Big')
+        axs[1].legend()
+        axs[1].set_xlabel("All freqs of " + name + "'s Big Core")
+        axs[1].set_ylabel("efficiency score")
+
+        freqs = cpu_freqs_6
+        values = cpu_effs_6
+        axs[2].bar(freqs, values, color='y', label='Big')
+        axs[2].legend()
+        axs[2].set_xlabel("All freqs of " + name + "'s Big Core")
+        axs[2].set_ylabel("efficiency score")
+
+        freqs = cpu_freqs_7
+        values = cpu_effs_7
+        axs[3].bar(freqs, values, color='g', label='Prime')
+        axs[3].legend()
+        axs[3].set_xlabel("All freqs of " + name + "'s Prime Core")
+        axs[3].set_ylabel("efficiency score")
+        plt.show()
+
+    elif (one_four == "yes"):
+        fig, axs = plt.subplots(2)
+        freqs = cpu_freqs_1
+        values = cpu_effs_1
+        axs[0].bar(freqs, values, color='r', label='Little')
+        axs[0].legend()
+        axs[0].set_xlabel("All freqs of " + name + "'s Little Core")
+        axs[0].set_ylabel("efficiency score")
+
+        freqs = cpu_freqs_4
+        values = cpu_effs_4
+        axs[1].bar(freqs, values, color='b', label='Big')
+        axs[1].legend()
+        axs[1].set_xlabel("All freqs of " + name + "'s Big Core")
+        axs[1].set_ylabel("efficiency score")
+        plt.show()
+
+    elif (one_six == "yes"):
+        fig, axs = plt.subplots(2)
+        freqs = cpu_freqs_1
+        values = cpu_effs_1
+        axs[0].bar(freqs, values, color='r', label='Little')
+        axs[0].legend()
+        axs[0].set_xlabel("All freqs of " + name + "'s Little Core")
+        axs[0].set_ylabel("efficiency score")
+
+        freqs = cpu_freqs_6
+        values = cpu_effs_6
+        axs[1].bar(freqs, values, color='b', label='Big')
+        axs[1].legend()
+        axs[1].set_xlabel("All freqs of " + name + "'s Big Core")
+        axs[1].set_ylabel("efficiency score")
+        plt.show()
+
+    elif (one_seven == "yes"):
+        fig, axs = plt.subplots(2)
+        freqs = cpu_freqs_1
+        values = cpu_effs_1
+        axs[0].bar(freqs, values, color='r', label='Little')
+        axs[0].legend()
+        axs[0].set_xlabel("All freqs of " + name + "'s Little Core")
+        axs[0].set_ylabel("efficiency score")
+
+        freqs = cpu_freqs_7
+        values = cpu_effs_7
+        axs[1].bar(freqs, values, color='g', label='Prime')
+        axs[1].legend()
+        axs[1].set_xlabel("All freqs of " + name + "'s Prime Core")
+        axs[1].set_ylabel("efficiency score")
+        plt.show()
+
+    else:
+        pass
+
+# Menu table for taking input from user
 while True:
-		print("\nOKay, what do want to do? \n")
-		print("1 = list all efficient freqs")
-		print("2 = calculate Legacy Engery Model (for soc that uses kernel below linux ver 4.19)")
-		print("3 = calculate Simplified Engery Model (for soc that uses linux ver 4.19 and above)")
-		work = input("Please enter your choice > ")
-		if work not in ["3","2","1"]:
-				print("\nWrong input, please choose a valid choice from the options")
-				continue
-		else:
-				break
+    print("\nOKay, what do want to do? \n")
+    print("1 = list all efficient freqs")
+    print("2 = calculate Legacy Engery Model (for soc that uses kernel below linux ver 4.19)")
+    print("3 = calculate Simplified Engery Model (for soc that uses linux ver 4.19 and above)")
+    print("4 = Plot Graph for analyzing CPU freq efficiency")
+    work = input("Please enter your choice > ")
+    if work not in ["4","3","2","1"]:
+        print("\nWrong input, please choose a valid choice from the options")
+        continue
+    else:
+        break
 
 if work == '1':
-	cal_efficient_freqs()
+    cal_efficient_freqs()
 elif work == '2':
-	print("Please enter your CPU idle cost data")
-	idle_cost_input = input("> ")
-	cal_energy_model(idle_cost_input)
+    print("Please enter your CPU idle cost data")
+    idle_cost_input = input("> ")
+    cal_energy_model(idle_cost_input)
+elif work == '3':
+    cal_minimal_energy_model()
 else:
-	cal_minimal_energy_model()
+    int_freq_efficiency_graph()
