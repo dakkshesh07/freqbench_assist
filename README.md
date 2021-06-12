@@ -5,6 +5,7 @@ A all in one tool for post processing and analyzing freqbench data
 1. calculate efficient freqs of a CPU
 2. calculate Legacy Energy Model for a SOC
 3. calculate Minimal Energy Model for a SOC
+4. Plot graphs on efficiency score of each freq of a SOC
 
    And many more coming soon!!!
 
