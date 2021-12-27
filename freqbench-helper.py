@@ -473,6 +473,8 @@ def int_freq_efficiency_graph():
     else:
         f = open(file,)
         json_data = json.load(f)
+        print("Enter your SoC name")
+        name = input("> ")
     cpus_data = json_data["cpus"]
 
     for cpu, cpu_data in cpus_data.items():
